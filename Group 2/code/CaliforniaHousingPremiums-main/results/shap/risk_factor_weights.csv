@@ -1,0 +1,10 @@
+Feature,Mean_Abs_SHAP,Weight
+population_density,117.51162,0.4666323
+Fire_Risk,45.609303,0.18111208
+Building_Age,31.380653,0.12461088
+Earthquake_Risk,22.125359,0.0878586
+median_year_built,18.75821,0.074487835
+km_to_fault,9.135852,0.036277976
+fault_nearby,3.914869,0.015545733
+High_Risk_Dense_Area,2.634188,0.010460218
+total_wildfire_days,0.7591035,0.003014359

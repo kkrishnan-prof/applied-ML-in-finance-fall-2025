@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>California ZIP Premium Predictor</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        .zip-search-container {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #667eea;
+        }
+        
+        .zip-search-container h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+        
+        .search-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .search-input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1.1em;
+        }
+        
+        .search-input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .search-input-group button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input-group button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .search-results {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .search-result-item {
+            padding: 10px;
+            background: white;
+            margin: 5px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 1px solid #e0e0e0;
+            transition: all 0.2s ease;
+        }
+        
+        .search-result-item:hover {
+            background: #f0f0f0;
+            border-color: #667eea;
+        }
+        
+        #californiaMap {
+            width: 100%;
+            height: 700px;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+        }
+        
+        .leaflet-popup-content {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-width: 200px;
+        }
+        
+        .popup-header {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        
+        .popup-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+            padding: 6px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .popup-row:last-child {
+            border-bottom: none;
+        }
+        
+        .popup-label {
+            font-weight: 600;
+            color: #555;
+            font-size: 0.95em;
+        }
+        
+        .popup-value {
+            color: #333;
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+        
+        .badge-underpriced {
+            background: #ffebee;
+            color: #c62828;
+            border: 2px solid #c62828;
+        }
+        
+        .badge-overpriced {
+            background: #e3f2fd;
+            color: #1565c0;
+            border: 2px solid #1565c0;
+        }
+        
+        .badge-adequate {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 2px solid #2e7d32;
+        }
+        
+        .legend {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 15px;
+        }
+        
+        .legend-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+        }
+        
+        .legend-color {
+            width: 30px;
+            height: 20px;
+            margin-right: 10px;
+            border-radius: 3px;
+            border: 1px solid #999;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            margin-top: 40px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>California ZIP-Level Premium Analysis</h1>
+        </header>
+        
+        <div class="stats-grid" id="statsContainer">
+            <div class="stat-card">
+                <h3 id="totalZips">-</h3>
+                <p>Total ZIP Codes</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="underpricedCount">-</h3>
+                <p>Underpriced ZIPs</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="overpricedCount">-</h3>
+                <p>Overpriced ZIPs</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="avgRevenue">-</h3>
+                <p>Avg Revenue/Exposure</p>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>California ZIP Codes - Interactive Premium Map</h2>
+            <p style="margin: 15px 0; color: #666;">
+                <strong>Click on any ZIP code marker</strong> to see pricing classification and key metrics.
+            </p>
+            
+            <!-- ZIP Search -->
+            <div class="zip-search-container">
+                <h3>Quick ZIP Code Search</h3>
+                <div class="search-input-group">
+                    <input type="text" id="zipSearch" placeholder="Enter ZIP code (e.g., 94566 for Pleasanton)" maxlength="5">
+                    <button onclick="searchZipCode()">Search</button>
+                </div>
+                <div class="search-results" id="searchResults"></div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-title">Color Legend:</div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e74c3c;"></div>
+                    <span>Underpriced (High Risk, Low Premium)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #27ae60;"></div>
+                    <span>Adequately Priced</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #3498db;"></div>
+                    <span>Overpriced (Low Risk, High Premium)</span>
+                </div>
+            </div>
+            
+            <div id="mapLoading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading California map data...</p>
+            </div>
+            <div id="californiaMap" style="display: none;"></div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2025 California ZIP-Level Premium Analysis</p>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'https://californiazippremiumpredictor.onrender.com';
+        let map = null;
+        let zipData = {};
+        
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_URL}/api/stats`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('totalZips').textContent = data.stats.total_zips.toLocaleString();
+                    document.getElementById('underpricedCount').textContent = data.stats.underpriced_count.toLocaleString();
+                    document.getElementById('overpricedCount').textContent = data.stats.overpriced_count.toLocaleString();
+                    document.getElementById('avgRevenue').textContent = '$' + data.stats.avg_revenue.toFixed(2);
+                }
+            } catch (error) {
+                console.error('Stats error:', error);
+            }
+        }
+        
+        async function loadMap() {
+            try {
+                console.log('Fetching map data from API...');
+                const response = await fetch(`${API_URL}/api/map-data`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const text = await response.text();
+                console.log(`Received ${text.length} characters of data`);
+                
+                const data = JSON.parse(text, (key, value) => {
+                    if (value === 'NaN' || value === 'Infinity' || value === '-Infinity') {
+                        return 0;
+                    }
+                    return value;
+                });
+                
+                console.log('Parsed data:', data);
+                console.log(`Success: ${data.success}, Data length: ${data.data ? data.data.length : 0}`);
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    console.log('First ZIP:', data.data[0]);
+                    createMap(data.data);
+                    document.getElementById('mapLoading').style.display = 'none';
+                    document.getElementById('californiaMap').style.display = 'block';
+                } else {
+                    throw new Error('No data available or invalid response');
+                }
+            } catch (error) {
+                console.error('Map loading error:', error);
+                document.getElementById('mapLoading').innerHTML = 
+                    `<p style="color: red;">Error loading map: ${error.message}<br>
+                    Check browser console (F12) for details<br>
+                    Make sure Flask server is running on port 5000</p>`;
+            }
+        }
+        
+        function createMap(data) {
+            console.log(`Creating map with ${data.length} ZIP codes`);
+            
+            map = L.map('californiaMap').setView([37.0, -119.5], 6);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 18,
+                minZoom: 5
+            }).addTo(map);
+            
+            let markerCount = 0;
+            let skippedCount = 0;
+            
+            data.forEach((zip, index) => {
+                if (index < 3) {
+                    console.log(`ZIP ${zip.zip_code}: lat=${zip.lat}, lon=${zip.lon}, underpriced=${zip.Underpriced}`);
+                }
+                
+                if (!zip.lat || !zip.lon || isNaN(zip.lat) || isNaN(zip.lon)) {
+                    skippedCount++;
+                    return;
+                }
+                
+                zipData[zip.zip_code] = zip;
+                
+                let color = '#27ae60';
+                if (zip.Underpriced) {
+                    color = '#e74c3c';
+                } else if (zip.Overpriced) {
+                    color = '#3498db';
+                }
+                
+                const marker = L.circleMarker([zip.lat, zip.lon], {
+                    radius: 8,
+                    fillColor: color,
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.9
+                });
+                
+                const classification = zip.Underpriced ? 'Underpriced (High Risk)' : 
+                                      zip.Overpriced ? 'Overpriced (Low Risk)' : 
+                                      'Adequately Priced';
+                
+                const badgeClass = zip.Underpriced ? 'badge-underpriced' : 
+                                  zip.Overpriced ? 'badge-overpriced' : 
+                                  'badge-adequate';
+                
+                const popupContent = `
+                    <div class="popup-header">ZIP ${zip.zip_code}</div>
+                    <div class="badge ${badgeClass}">${classification}</div>
+                    
+                    <div class="popup-row">
+                        <span class="popup-label">Actual Premium:</span>
+                        <span class="popup-value">$${zip.Revenue_per_Exposure.toFixed(0)}</span>
+                    </div>
+                    
+                    <div class="popup-row">
+                        <span class="popup-label">Predicted:</span>
+                        <span class="popup-value">$${zip.Predicted_Revenue.toFixed(0)}</span>
+                    </div>
+                    
+                    <div class="popup-row">
+                        <span class="popup-label">Risk Score:</span>
+                        <span class="popup-value">${zip.Composite_Risk_Score.toFixed(3)}</span>
+                    </div>
+                    
+                    <div class="popup-row">
+                        <span class="popup-label">Rate Change:</span>
+                        <span class="popup-value"><strong>${zip['Recommended_Rate_Change_%'].toFixed(1)}%</strong></span>
+                    </div>
+                `;
+                
+                marker.bindPopup(popupContent, {
+                    maxWidth: 250
+                });
+                
+                marker.addTo(map);
+                markerCount++;
+            });
+            
+            console.log(`✓ Added ${markerCount} markers to map (skipped ${skippedCount})`);
+            
+            if (markerCount > 0) {
+                const bounds = L.latLngBounds(
+                    data.filter(z => z.lat && z.lon).map(z => [z.lat, z.lon])
+                );
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+            
+            L.control.scale().addTo(map);
+        }
+        
+        async function searchZipCode() {
+            const query = document.getElementById('zipSearch').value.trim();
+            
+            if (!query) {
+                document.getElementById('searchResults').innerHTML = '<p style="color: red; padding: 10px;">Please enter a ZIP code</p>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/api/search-zip?q=${query}`);
+                const data = await response.json();
+                
+                if (data.success && data.results.length > 0) {
+                    let html = '<div style="font-weight: 600; padding: 10px; background: #f0f0f0; border-radius: 5px; margin-bottom: 5px;">Found ' + data.results.length + ' result(s):</div>';
+                    
+                    data.results.forEach(result => {
+                        const classification = result.underpriced ? 'Underpriced' : result.overpriced ? 'Overpriced' : 'Adequate';
+                        const color = result.underpriced ? '#e74c3c' : result.overpriced ? '#3498db' : '#27ae60';
+                        
+                        html += `
+                            <div class="search-result-item" onclick="flyToZip(${result.lat}, ${result.lon}, ${result.zip_code})">
+                                <strong style="font-size: 1.1em;">ZIP ${result.zip_code}</strong>
+                                <span style="float: right; color: ${color}; font-weight: 600;">${classification}</span>
+                                <br>
+                                <small style="color: #666;">Revenue: $${result.revenue.toFixed(0)} | Risk: ${result.risk_score.toFixed(3)}</small>
+                            </div>
+                        `;
+                    });
+                    
+                    document.getElementById('searchResults').innerHTML = html;
+                } else {
+                    document.getElementById('searchResults').innerHTML = '<p style="padding: 10px; color: #666;">No results found for "' + query + '"</p>';
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                document.getElementById('searchResults').innerHTML = '<p style="color: red; padding: 10px;">Error searching ZIP codes</p>';
+            }
+        }
+        
+        function flyToZip(lat, lon, zipCode) {
+            if (map) {
+                map.flyTo([lat, lon], 12, {
+                    duration: 2
+                });
+                
+                setTimeout(() => {
+                    const markers = [];
+                    map.eachLayer(layer => {
+                        if (layer instanceof L.CircleMarker) {
+                            markers.push(layer);
+                        }
+                    });
+                    
+                    markers.forEach(marker => {
+                        const latlng = marker.getLatLng();
+                        if (Math.abs(latlng.lat - lat) < 0.01 && Math.abs(latlng.lng - lon) < 0.01) {
+                            marker.openPopup();
+                        }
+                    });
+                }, 2000);
+            }
+            
+            document.getElementById('zipSearch').value = '';
+            document.getElementById('searchResults').innerHTML = '';
+        }
+        
+        document.getElementById('zipSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchZipCode();
+            }
+        });
+        
+        window.addEventListener('load', function() {
+            loadStats();
+            loadMap();
+        });
+    </script>
+</body>
+</html>

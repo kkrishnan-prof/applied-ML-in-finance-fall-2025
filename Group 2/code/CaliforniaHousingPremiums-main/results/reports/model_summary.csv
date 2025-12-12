@@ -1,0 +1,2 @@
+analysis_date,best_model,test_r2,test_rmse,test_mae,test_mape,train_r2,overfit_gap,n_features,n_train_obs,n_test_obs,train_years,test_year,underpriced_zips,overpriced_zips,adequate_zips
+2025-12-10 08:47:35,XGBoost,0.7601,316.77,182.36,11.57,0.9352,0.175,18,5437,1806,2018-2020,2021,46,516,1244

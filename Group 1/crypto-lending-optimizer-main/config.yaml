@@ -1,0 +1,94 @@
+# Hybrid Lending Rate Optimization System Configuration
+
+# Data settings
+data:
+  input_file: "data/raw/btcusd_1-min_data.csv"
+  processed_file: "data/processed/processed_data.parquet"
+  min_training_samples: 4320  # 6 months of hourly data
+  resample_frequency: "1H"  # Resample 1-min data to 1-hour candles
+
+# Feature engineering
+features:
+  volatility_windows: [6, 24, 72, 168]  # hours
+  return_windows: [6, 24, 72]
+  volume_windows: [24, 168]
+  forward_vol_horizons: [1, 4, 24]  # hours for forward volatility targets
+  extreme_vol_percentile: 75  # Define extreme volatility threshold
+
+# Model hyperparameters
+models:
+  volatility:
+    lightgbm:
+      n_estimators: 150      # Further reduced for less overfitting
+      learning_rate: 0.03    # Slower learning
+      max_depth: 4           # Even shallower trees
+      num_leaves: 15         # Simpler trees
+      min_child_samples: 100 # Much larger leaf sizes
+      subsample: 0.6         # More aggressive subsampling
+      colsample_bytree: 0.6  # More feature randomness
+      reg_alpha: 5.0         # Stronger L1 regularization
+      reg_lambda: 5.0        # Stronger L2 regularization
+      random_state: 42
+
+    xgboost:
+      n_estimators: 500
+      learning_rate: 0.05
+      max_depth: 6
+      subsample: 0.8
+      colsample_bytree: 0.8
+      random_state: 42
+
+    randomforest:
+      n_estimators: 300
+      max_depth: 20
+      min_samples_split: 5
+      random_state: 42
+
+    lstm:
+      sequence_length: 168  # 1 week lookback
+      hidden_units: 64
+      num_layers: 2
+      dropout: 0.2
+      epochs: 50
+      batch_size: 32
+      learning_rate: 0.001
+
+  revenue:
+    simulation:
+      base_demand: 0.8  # Base utilization rate
+      elasticity: 20  # How sensitive traders are to rates
+      vol_factor: 1.0  # Volatility increases trading activity
+      avg_hold_time_hours: 8
+      liquidation_fee: 0.05  # 5% of position
+      min_test_rate: 0.0001  # 0.01% per day
+      max_test_rate: 0.0025  # 0.25% per day
+      num_test_rates: 50
+
+# Rate calculation
+rate_params:
+  min_rate_per_day: 0.0001  # 0.01%
+  max_rate_per_day: 0.01    # 1.0%
+  vol_premium_scaling: 0.001
+  leverage_exponent: 0.7
+
+# Model evaluation
+evaluation:
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  cv_splits: 5
+
+# API settings
+api:
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins: ["http://localhost:3000"]  # NextJS dev server
+
+# Backtesting
+backtest:
+  baseline_rate: 0.0005  # 0.05% per day - industry standard
+
+# Logging
+logging:
+  level: "INFO"
+  file: "logs/system.log"

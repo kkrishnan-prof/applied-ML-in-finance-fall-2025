@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Models (optional - remove if you want to commit trained models)
+# models/*.pkl
+# models/*.json
+
+# Data (large files - download separately)
+btcusd_1-min_data.csv
+data/raw/*.csv
+data/processed/*.parquet
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.claude/
+
+# Next.js
+webapp/.next/
+webapp/out/
+webapp/node_modules/
+webapp/.env*.local
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Results
+results/*.csv
+results/*.json
+
+# Config (if contains sensitive data)
+# config.yaml

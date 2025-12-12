@@ -1,0 +1,6 @@
+Removed_Feature,Reason
+lon_norm,High VIF (multicollinearity)
+median_rooms,High VIF (multicollinearity)
+total_housing_units,High VIF (multicollinearity)
+Rooms_per_Unit,High VIF (multicollinearity)
+Wildfire_Risk_per_House,High VIF (multicollinearity)
