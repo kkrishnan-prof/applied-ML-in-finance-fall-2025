@@ -5,7 +5,7 @@ This repository contains final projects from students in my Fall 2025 applied ma
 
 ---
 
-## Group 1: Interent Rate Efficiency in Leveraged Tradi􀀮g in BTC  
+## Group 1: Interent Rate Efficiency in Leveraged Trading in BTC  
 
 A system that calculates optimal lending rates for leveraged crypto trading through a machine learning predictive model.
 
